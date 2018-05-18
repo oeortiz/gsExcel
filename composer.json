@@ -1,0 +1,8 @@
+{
+    "name": "gsoft/excel-bundle",
+    "description": "A simple and useful implementation phpExcel",
+    "require": {
+        "php": "^5.3.3 || ^7.0",
+        "phpoffice/phpexcel": "~1.8.1"
+    }
+}

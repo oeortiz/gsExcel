@@ -11,10 +11,10 @@ makes phpexcel simple and usable.
 return new GsExcel($arrayRows,$titles,'Users-Report');
 	
 // OR Create on base to other file
-		$file = new GsExcel($arrayRows,$titles,'Users-Report');
- 		$file->createFromFile(sfConfig::get('sf_upload_dir').'/Formatos/FormatoReportePlataformas.xlsx');
-        $file->init();
-        $file->setTitles($tituloColums,$this->iRow);
-        $file->getExcel();
+$file = new GsExcel($arrayRows,$titles,'Users-Report');
+$file->createFromFile(sfConfig::get('sf_upload_dir').'/Formatos/FormatoReportePlataformas.xlsx');
+$file->init();
+$file->setTitles($tituloColums,$this->iRow);
+$file->getExcel();
 
 ````

@@ -14,7 +14,7 @@ class GsoftExcelBundle extends Bundle
     private $sheet;
     private $objPHPExcel;
     private $letters = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z');
-	//private $letters array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25');
+//    private $letters array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25');
     private $iRow;
     private $iColumn;
     private $colorCell;
@@ -47,14 +47,6 @@ class GsoftExcelBundle extends Bundle
     }
 
 
-    /**
-     * @Route("/")
-     */
-    public function indexAction()
-    {
-        return $this->render('GsoftExcelBundle:Default:index.html.twig');
-    }
-
     protected function createXls() {
         error_reporting(E_ALL);
         ini_set('display_errors', TRUE);
@@ -69,6 +61,9 @@ class GsoftExcelBundle extends Bundle
                 ->setDescription($this->tituloArchivo);
     }
 
+    /**
+     * @param string $nameTemplate Is the name of template that should be in /web/uploads/Formatos e.g 'FormatoReporteForecastPs.xlsx'
+     */
     protected function createFromFile($route) {
         try {
             $inputFileType = PHPExcel_IOFactory::identify($route);
@@ -98,6 +93,14 @@ class GsoftExcelBundle extends Bundle
     public function setActiveSheetIndex($index) {
         $this->objPHPExcel->setActiveSheetIndex($index);
         $this->sheet = $this->objPHPExcel->getActiveSheet();
+    }
+
+    public function getActiveSheet($index) {        
+        return $this->objPHPExcel->getActiveSheet();
+    }
+
+    public function removeSheetByIndex($index){
+        $this->objPHPExcel->removeSheetByIndex($index);
     }
 
     protected function setData() {
@@ -147,26 +150,26 @@ class GsoftExcelBundle extends Bundle
     }
 
     public function getExcel() {
-            // Redirect output to a client’s web browser (Excel2007)
-            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment;filename="' . $this->tituloArchivo . '.xlsx"');
-            header('Cache-Control: max-age=0');
-            // If you're serving to IE 9, then the following may be needed
-            header('Cache-Control: max-age=1');
+        // Redirect output to a client’s web browser (Excel2007)
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $this->tituloArchivo . '.xlsx"');
+        header('Cache-Control: max-age=0');
+        // If you're serving to IE 9, then the following may be needed
+        header('Cache-Control: max-age=1');
 
-            // If you're serving to IE over SSL, then the following may be needed
-            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); // Date in the past
-            header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT'); // always modified
-            header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
-            header('Pragma: public'); // HTTP/1.0
+        // If you're serving to IE over SSL, then the following may be needed
+        header('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); // Date in the past
+        header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT'); // always modified
+        header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
+        header('Pragma: public'); // HTTP/1.0
 
-            ob_end_clean();
+        ob_end_clean();
 
 
-	        $objWriter = PHPExcel_IOFactory::createWriter($this->objPHPExcel, 'Excel2007');
-	        $objWriter->save('php://output');
-	        PHPExcel_Calculation::unsetInstance($this->objPHPExcel);
-	        exit;
+        $objWriter = PHPExcel_IOFactory::createWriter($this->objPHPExcel, 'Excel2007');
+        $objWriter->save('php://output');
+        PHPExcel_Calculation::unsetInstance($this->objPHPExcel);
+        exit;
     }
 
     protected function getIRow() {
@@ -215,8 +218,8 @@ class GsoftExcelBundle extends Bundle
         if($this->verticalAlignCenter)
             $this->cellVerticalAlignCenter($iRow, $iColumn);
 
-		//  if($this->conditionals)
-		//		$this->setConditionalStyle($iRow, $iColumn);
+        //        if($this->conditionals)
+        //            $this->setConditionalStyle($iRow, $iColumn);
 
         $this->setFont($iRow, $iColumn);
 
@@ -333,7 +336,7 @@ class GsoftExcelBundle extends Bundle
     }
 
     protected function mergeCell($iRow, $iColumn, $iRowf, $iColumnf) {
-		// echo$this->letters[$iColumn] . $iRow . ':' . $this->letters[$iColumnf] . $iRowf;
+        //echo$this->letters[$iColumn] . $iRow . ':' . $this->letters[$iColumnf] . $iRowf;
         $this->sheet->mergeCells($this->letters[$iColumn] . $iRow . ':' . $this->letters[$iColumnf] . $iRowf);
     }
 
@@ -449,10 +452,60 @@ class GsoftExcelBundle extends Bundle
                                             FALSE);
             $value[0]['idRow']=$row;
             $value[0]['is_ok']=1;
-            if($value[0][0])
-            $rows[$row] = $value[0];
+            if($value[0][0]||$value[0][1])
+                $rows[$row] = $value[0];
         }
         return $rows;
+    }
+
+    public function validateRows($rules){
+        $rowsCol = self::getDataFromFile();
+        foreach ($rowsCol as $j=>$rows) {
+            foreach ($rows as $key =>$value) {
+                if(array_key_exists($key, $rules)){
+                    //echo "evaluando [".$key."] =>".$value."<br>";
+                    switch ($rules[$key]) {
+                        case 'required':
+                            if(!$value && $value == "")
+                                return "Columna: ".$this->letters [$key]." Linea: ".$rowsCol[$j]['idRow'] ." Campo obligatorio";
+                            break;
+                        case 'number':                            
+                            if(!is_numeric($value))
+                                return "Columna: ".$this->letters [$key]." Linea: ".$rowsCol[$j]['idRow'] ." No es un numero";
+                            break;
+                        case 'values':
+                            if (!in_array($value, $rules[$key]))
+                                return "Columna: ".$this->letters [$key]." Linea: ".$rowsCol[$j]['idRow'] ." No se encontró en el sistema";
+                            break;
+                    }
+                }
+            }
+        }        
+        return "";
+    }
+
+    public function loadToStoreProcedure($nameProcedure){
+        $rowsCol = self::getDataFromFile();        
+        foreach($rowsCol as &$rowCol){
+            foreach($rowCol as $key => $value){
+                if(is_null($value))
+                    unset($rowCol[$key]);
+            }
+        }
+
+        foreach ($rowsCol as $key=>$rows) {
+            $sql = " CALL $nameProcedure(";
+            $arraInside = array();
+            foreach ($rows as $key=>$value) {
+                if(is_numeric($key))
+                    $arraInside[] = "'".Util::cleanString($value)."'";
+            }
+            $arraInside = implode(',', $arraInside);
+            $sql.=$arraInside.");";
+            // echo $sql."<br>";
+            Doctrine_Manager::getInstance()->getCurrentConnection()->getDbh()->prepare($sql)->execute();                
+        }
+        // joder();
     }
 
     protected function setAutoWidthColumn($letterColumn){
@@ -493,7 +546,7 @@ class GsoftExcelBundle extends Bundle
         if(is_numeric($numericDate)) {
             //se agrega el tiempo equivalente a un dia puesto que phpExcel no retornaba correctamente.
             $time = PHPExcel_Shared_Date::ExcelToPHP($numericDate)+ 86400;
-			// $date = date("Y-m-d",$time);
+//            $date = date("Y-m-d",$time);
             $date = date($formatPhpDate,$time);
             $this->setValueCell($date, $cellCoordinates['row'], $cellCoordinates['col']);
         }
